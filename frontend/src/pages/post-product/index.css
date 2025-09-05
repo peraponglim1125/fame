@@ -1,0 +1,194 @@
+/* index.css — Elegant Marketplace Form (CSS-only)
+   ------------------------------------------------ */
+
+/* ===== Theme ===== */
+:root {
+  --brand: #ee4d2d;            /* ส้มหลัก */
+  --brand-2: #ff6a3c;          /* ส้มไล่เฉด */
+  --accent: #ffb199;           /* ส้มอ่อน */
+  --text: #1f2937;             /* เทาเข้มอ่านง่าย */
+  --muted: #6b7280;            /* เทากลาง */
+  --line: #e5e7eb;             /* เส้นคั่น */
+  --card: #ffffff;             /* พื้นการ์ด */
+  --bg1: #fffaf7;              /* พื้นหลังอ่อน */
+  --shadow: 0 10px 25px rgba(0,0,0,.07);
+  
+}
+
+/* ===== Page / Container ===== */
+
+
+.container {
+  max-width: 1040px;
+  margin: 98px auto 72px;         /* เผื่อโลโก้มุมซ้าย */
+  padding: 0 20px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--text);
+}
+
+/* ===== Card / Form Shell ===== */
+.form {
+  background: var(--card);
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  overflow: hidden;               /* เก็บขอบโค้ง */
+  position: relative;
+  padding: 26px 22px 8px;
+}
+
+/* แถบหัวการ์ดด้านบน ไล่เฉดส้ม */
+.form::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  height: 6px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+}
+
+/* หัวข้อย่อยที่ส่งมาเป็น <h4> ใน label */
+.form h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Grid 2 คอลัมน์: ซ้าย (ข้อมูลทั่วไป) / ขวา (หมวดหมู่) */
+.Card1 {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 28px;
+}
+
+/* เส้นคั่นเรียบ ๆ */
+.form .ant-divider {
+  border-color: var(--line) !important;
+  margin: 10px 0 20px;
+}
+
+/* ===== AntD Overrides (เฉพาะหน้านี้) ===== */
+.form .ant-form-item {
+  margin-bottom: 16px;
+}
+.form .ant-form-item-label {
+  padding-right: 14px;
+}
+.form .ant-form-item-label > label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ดาว * ของ required ให้เป็นส้ม */
+.form .ant-form-item-required::before {
+  color: var(--brand) !important;
+}
+
+/* Inputs */
+.form .ant-input,
+.form .ant-input-affix-wrapper,
+.form .ant-input-textarea,
+.form .ant-input-textarea textarea {
+  border-radius: 12px !important;
+  border-color: #e6e6e6 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  font-size: 14px;
+}
+.form .ant-input:hover,
+.form .ant-input:focus,
+.form .ant-input-affix-wrapper:hover,
+.form .ant-input-affix-wrapper-focused,
+.form .ant-input-textarea:focus-within {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px rgba(238,77,45,.12) !important;
+}
+
+/* Placeholder สีอ่อนอ่านง่าย */
+.form input::placeholder,
+.form textarea::placeholder {
+  color: #9aa0a6;
+}
+
+/* Checkbox Group */
+.form .ant-checkbox-wrapper {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #374151;
+}
+.form .ant-checkbox-inner {
+  border-radius: 4px;
+}
+.form .ant-checkbox-checked .ant-checkbox-inner {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+/* ===== Upload Area (รองรับ Ant Upload / ปุ่มอัปโหลดทั่วไป) ===== */
+[name="image"] .ant-form-item-control-input {
+  min-height: 44px;
+}
+
+.form .ant-upload,
+.form .ant-upload-select,
+.form .ant-upload-select-picture-card {
+  border-radius: 12px !important;
+  border: 2px dashed #f1cabf !important;
+  background: #fff7f3 !important;
+  transition: border-color .15s ease, background .15s ease, transform .12s ease;
+}
+.form .ant-upload:hover,
+.form .ant-upload-select:hover {
+  border-color: var(--brand) !important;
+  background: #fff2ec !important;
+  transform: translateY(-1px);
+}
+.form .ant-upload-list-item {
+  border-radius: 10px !important;
+}
+
+/* ===== Submit Button (ทับ inline style เดิม) ===== */
+.form .ant-btn {
+  background: linear-gradient(180deg, var(--brand-2), var(--brand)) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 10px 20px !important;
+  font-weight: 700 !important;
+  letter-spacing: .2px;
+  box-shadow: 0 6px 14px rgba(238,77,45,.28) !important;
+  transition: transform .12s ease, filter .15s ease, box-shadow .15s ease !important;
+}
+.form .ant-btn:hover {
+  filter: brightness(.97);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(238,77,45,.32) !important;
+}
+
+/* ===== Section Header Line (ใต้ “ภาพสินค้า”) ===== */
+[name="image"] .ant-form-item-control-input + .ant-form-item-explain,
+[name="image"] + .ant-divider {
+  /* ใช้ divider เดิม แต่สีกลืน */
+  border-color: var(--line) !important;
+}
+
+/* ===== Micro Polish ===== */
+.form .ant-form-item-explain-error {
+  font-size: 12px;
+}
+.form .ant-input:disabled,
+.form .ant-input[disabled] {
+  background: #f9fafb !important;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .Card1 { grid-template-columns: 1fr; }
+  .container { margin-top: 92px; }
+}
+@media (max-width: 560px) {
+  .form { padding: 22px 16px 6px; }
+  .form .ant-btn { width: 100%; }
+}

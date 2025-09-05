@@ -1,0 +1,159 @@
+/* ===== Shop Profile – Elegant Marketplace Style (CSS only) ===== */
+
+/* โทนสี */
+:root {
+  --brand: #ee4d2d;         /* ส้มหลัก */
+  --brand-2: #ff6a3c;       /* ส้มไล่เฉด */
+  --text: #1f2937;          /* เทาเข้ม */
+  --muted: #6b7280;         /* เทากลาง */
+  --line: #e5e7eb;          /* เส้นคั่น */
+  --card: #ffffff;          /* พื้นการ์ด */
+  --bg: #fffaf7;            /* พื้นหลังอ่อน */
+  --shadow: 0 12px 28px rgba(0,0,0,.08);
+}
+
+/* พื้นหลังหน้านี้ให้มีมิติหน่อย */
+
+
+/* ระยะเผื่อโลโก้มุมซ้าย */
+.container {
+  max-width: 1040px;
+  margin: 96px auto 72px;
+  padding: 0 20px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--text);
+}
+
+/* กล่องฟอร์มหลัก (ใช้กับ <Form> ตัวเดียวในหน้า) */
+.container > .ant-form {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 28px 24px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* แถบสีส้มด้านบนการ์ด */
+.container > .ant-form::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; width: 100%; height: 6px;
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+}
+
+/* เส้น Divider เรียบ ๆ */
+.container .ant-divider {
+  border-color: var(--line) !important;
+  margin: 12px 0 22px;
+}
+
+/* Grid 2 คอลัมน์ของฟอร์ม (ซ้าย/ขวา) */
+.form2 {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 28px;
+}
+
+/* ===== Ant Design overrides ===== */
+.container .ant-form-item {
+  margin-bottom: 16px;
+}
+.container .ant-form-item-label {
+  padding-right: 14px;
+}
+.container .ant-form-item-label > label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ดาว * ของ required ให้เป็นส้ม */
+.container .ant-form-item-required::before { color: var(--brand) !important; }
+
+/* ช่องกรอกทั้งหมด */
+.container .ant-input,
+.container .ant-input-textarea,
+.container .ant-input-affix-wrapper {
+  border-radius: 12px !important;
+  border-color: #e6e6e6 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  font-size: 14px;
+}
+.container .ant-input:hover,
+.container .ant-input:focus,
+.container .ant-input-affix-wrapper:hover,
+.container .ant-input-affix-wrapper-focused,
+.container .ant-input-textarea:focus-within {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px rgba(238,77,45,.12) !important;
+}
+
+/* Placeholder อ่อน ๆ */
+.container input::placeholder,
+.container textarea::placeholder { color: #9aa0a6; }
+
+/* Radio (หมวดหมู่ร้านค้า) */
+.container .ant-radio-wrapper {
+  margin: 6px 0;
+  font-size: 14px;
+  color: #374151;
+}
+.container .ant-radio-inner { border-color: #d1d5db; }
+.container .ant-radio-checked .ant-radio-inner {
+  border-color: var(--brand) !important;
+}
+.container .ant-radio-inner::after {
+  background: var(--brand) !important;
+}
+
+/* โซนอัปโหลดโลโก้ (รองรับคอมโพเนนต์ UploadLogo ที่ใช้ antd Upload) */
+.container .ant-upload,
+.container .ant-upload-select,
+.container .ant-upload-picture-card-wrapper .ant-upload-select {
+  border-radius: 12px !important;
+  border: 2px dashed #f1cabf !important;
+  background: #fff7f3 !important;
+  transition: border-color .15s ease, background .15s ease, transform .12s ease;
+}
+.container .ant-upload:hover,
+.container .ant-upload-select:hover {
+  border-color: var(--brand) !important;
+  background: #fff2ec !important;
+  transform: translateY(-1px);
+}
+.container .ant-upload-list-item { border-radius: 10px !important; }
+
+/* ปุ่ม Submit ให้เด่น (ทับ inline style เดิม) */
+.container .ant-form .ant-btn[type="submit"] {
+  background: linear-gradient(180deg, var(--brand-2), var(--brand)) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 10px 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: .2px;
+  box-shadow: 0 8px 16px rgba(238,77,45,.25) !important;
+  transition: transform .12s ease, filter .15s ease, box-shadow .15s ease !important;
+}
+.container .ant-form .ant-btn[type="submit"]:hover {
+  filter: brightness(.97);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(238,77,45,.32) !important;
+}
+
+/* ข้อความ error */
+.container .ant-form-item-explain-error { font-size: 12px; }
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .form2 { grid-template-columns: 1fr; }
+  .container { margin-top: 92px; }
+}
+@media (max-width: 560px) {
+  .container > .ant-form { padding: 24px 16px 10px; }
+  .container .ant-form .ant-btn[type="submit"] { width: 100%; }
+}

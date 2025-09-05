@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Fuzzy+Bubbles:wght@400;700&display=swap');
+
+:root{
+  --bg:#f3f4f6;        /* พื้นหลังเทาอ่อน */
+  --card:#fff;         /* กล่องขาว */
+  --line:#e6e7eb;      /* เส้นคั่น */
+  --text:#222;
+  --muted:#666;
+  --blue:#1890ff;      /* ลิงก์ */
+  --orange:#ff7a00;    /* ปุ่ม/ยอดรวม */
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+  --radius:10px;
+  --gap:14px;
+  --font:'Fuzzy Bubbles', sans-serif;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);}
+
+.page{
+  max-width: 1040px;
+  margin: 18px auto 36px;
+  font-family: var(--font);
+  color: var(--text);
+  padding: 0 12px;
+}
+
+.card{
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.card-head{
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.card-head.m0{ margin-bottom: 0; }
+
+.addr .addr-name{ font-weight:700; margin-bottom:6px; }
+.addr .addr-line{ color:var(--muted); line-height:1.5; }
+.addr-actions{ margin-top:8px; display:flex; align-items:center; gap:10px; }
+.tag{
+  font-size:12px; background:#f0f0f0; border:1px solid var(--line);
+  border-radius:999px; padding:2px 10px;
+}
+.link{ background:none; border:none; color:var(--blue); cursor:pointer; font-family:var(--font); }
+
+.shop{ font-weight:700; margin-bottom:8px; }
+
+.tbl{ 
+  display:grid; 
+  grid-template-columns: 2.5fr 1fr 1fr 1.2fr; 
+  align-items:center; 
+}
+.tbl.head{
+  font-weight:700; 
+  color:var(--muted);
+  padding: 8px 0;
+  border-bottom:1px solid var(--line);
+}
+.tbl.row{
+  padding: 12px 0;
+  border-bottom:1px solid var(--line);
+}
+.prod{ display:flex; align-items:center; gap:12px; }
+.prod img{
+  width:64px; height:64px; object-fit:cover;
+  border:1px solid var(--line); border-radius:6px; background:#fafafa;
+}
+.prod-name{ font-weight:700; }
+
+.num{ text-align:right; }
+
+.divider{ height:1px; background:var(--line); margin:10px 0; }
+
+.between{ display:flex; justify-content:space-between; align-items:center; padding: 8px 0; }
+
+.total-line .right{ display:flex; justify-content:flex-end; gap:14px; align-items:center; }
+.muted{ color:var(--muted); }
+.grand{ color:var(--orange); font-size:22px; font-weight:700; }
+
+.pay{ margin-top: 12px; display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+.pay-title{ font-weight:700; margin-right:8px; }
+
+.radio{ display:inline-flex; align-items:center; gap:8px; cursor:pointer; }
+.radio input{ display:none; }
+.radio .dot{
+  width:18px; height:18px; border-radius:50%;
+  border:2px solid #ff2e8b; display:inline-block; position:relative;
+}
+.radio input:checked + .dot::after{
+  content:""; position:absolute; inset:3px; border-radius:50%; background:#ff2e8b;
+}
+
+.sum{ margin-top: 10px; }
+.sum > div{ display:flex; justify-content:space-between; padding:6px 0; }
+.sum-total{ border-top:1px solid var(--line); margin-top:6px; padding-top:10px; font-weight:700; }
+
+.foot{
+  margin-top: 12px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.policy{ color:var(--muted); font-size:14px; }
+.btn-orange{
+  background: var(--orange); color:#fff; border:none; border-radius:6px;
+  padding:10px 20px; font-weight:700; cursor:pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,.05);
+}
+.btn-orange:hover{ filter: brightness(1.05); }
+/* ใช้กริดเดียวกันทั้งหัวและแถว */
+.tbl{
+  display: grid;
+  grid-template-columns: 1fr 140px 100px 160px; /* Product | Unit | Amount | Subtotal */
+  column-gap: 16px;
+  align-items: center;
+}
+
+/* หัวตาราง */
+.tbl.head{
+  font-weight: 700;
+  color: #777;
+  padding: 8px 0;
+  border-bottom: 1px solid #e6e7eb;
+}
+
+/* แถวข้อมูล */
+.tbl.row{
+  padding: 12px 0;
+  border-bottom: 1px solid #e6e7eb;
+}
+
+/* ช่องตัวเลขให้ชิดขวาเหมือนกันหมด */
+.num{
+  justify-self: end;
+  text-align: right;
+  white-space: nowrap;        /* กันตัดบรรทัด */
+  min-width: 0;
+}
+
+/* หัวคอลัมน์ 2–4 ก็ชิดขวาให้ตรงกับตัวเลข */
+.tbl.head > :nth-child(2),
+.tbl.head > :nth-child(3),
+.tbl.head > :nth-child(4){
+  justify-self: end;
+  text-align: right;
+}
+
+/* คอลัมน์สินค้าให้รูป+ชื่อเรียงแนวนอน และล็อกขนาดรูป */
+.prod{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.prod img{
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e6e7eb;
+  flex: 0 0 56px;             /* กันรูปดันคอลัมน์ */
+}
+.prod-name{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;        /* ชื่อยาวไม่ดันคอลัมน์ */
+}
+.btn-blue {
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-blue:hover {
+  filter: brightness(1.1);
+}

@@ -1,0 +1,86 @@
+/* ===== Base reset ===== */
+html, body, #root {
+  margin: 0; padding: 0; height: 100%;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #fdfdfd; /* พื้นหลังขาวนวล */
+  color: #222; /* ตัวหนังสือเทาเข้ม อ่านง่าย */
+}
+#root { position: relative; z-index: 1; }
+
+/* ===== พื้นหลังโทนขาว ๆ + แสงนวล ===== */
+.bg-fire {
+  position: fixed; inset: 0;
+  z-index: -1; pointer-events: none; overflow: hidden;
+
+  background:
+    radial-gradient(800px 400px at 20% 20%, rgba(255,255,255,1) 0%, transparent 70%),
+    radial-gradient(600px 300px at 80% 30%, rgba(245,245,245,0.9) 0%, transparent 70%),
+    radial-gradient(700px 400px at 50% 90%, rgba(230,230,230,0.8) 0%, transparent 70%),
+    linear-gradient(160deg, #ffffff 0%, #f7f7f7 50%, #efefef 100%);
+  filter: saturate(1.05) contrast(1.02);
+}
+
+/* เงาแบบ soft overlay */
+.bg-fire::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 120%, rgba(0,0,0,0.08), transparent 70%);
+}
+
+/* ===== Header ===== */
+.background-header {
+  --header-height: 56px;
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 1000;
+
+  display: flex; align-items: center;
+  height: var(--header-height);
+  padding: 0 20px;
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px) saturate(1.2);
+  color: #222;
+  font-weight: 600;
+
+  /* เงานุ่ม */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+/* เว้นที่ให้คอนเทนต์ */
+.page-wrap { padding-top: var(--header-height); }
+
+/* ฟิล์มบาง ๆ เพิ่มความ contrast เล็กน้อย */
+.page-wrap::before {
+  content: "";
+  position: fixed; inset: 0;
+  z-index: -0;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .background-header { --header-height: 48px; }
+  .bg-fire { filter: saturate(1) contrast(1); }
+}
+/* ===== พื้นหลังโทนขาวอ่อนมาก (ซีดลง) ===== */
+.bg-fire {
+  position: fixed; inset: 0;
+  z-index: -1; pointer-events: none; overflow: hidden;
+
+  background:
+    linear-gradient(180deg, #ffffff 0%, #fafafa 50%, #f5f5f5 100%);
+}
+
+/* ===== Overlay บาง ๆ ทับพื้นหลัง ===== */
+.page-wrap::before {
+  content: "";
+  position: fixed; inset: 0;
+  z-index: -0;
+  background: rgba(0, 0, 0, 0.05); /* โปร่ง 5% พอให้รูปเด่นขึ้น */
+  pointer-events: none;
+}

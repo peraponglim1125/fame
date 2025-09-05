@@ -1,0 +1,70 @@
+
+
+/* Navbar */
+.background-header{
+  position: sticky;   /* หรือใช้ fixed ก็ได้ถ้าต้องการลอยตามหน้าจอเสมอ */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+
+  background: #f79a0c;
+  color: #fff;
+  width: 100%;
+  margin: 0;
+
+  /* คุมความสูง + ชิดขอบบนจริง ๆ */
+  height: 40px;
+  padding: 0 12px;     /* เอา padding บน-ล่างออก */
+  display: flex;
+  align-items: center; /* จัดให้อยู่กลางแนวตั้ง */
+}
+
+.header-row{
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.header-left, .header-right{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.no-border-button{
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.select-no-border{
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0 4px;
+  outline: none;
+}
+
+.left-font-size-large{
+  font-family: 'Fuzzy Bubbles', sans-serif;
+  font-size: 14px;
+}
+
+/* เส้นขอบล่างบาง ๆ */
+.background-header::after{
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: px;
+  background: rgba(255,255,255,.25);
+}
+
+

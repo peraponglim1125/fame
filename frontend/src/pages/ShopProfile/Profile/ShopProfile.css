@@ -1,0 +1,334 @@
+/* ShopProfile.css — Shopee-like profile */
+
+/* ---------- Theme ---------- */
+:root {
+  --brand: #ee4d2d;
+  --brand-2: #ff6a3c;
+  --muted: #6b7280;
+  --text: #1f2937;
+  --line: #e5e7eb;
+  --card: #fff;
+  --shadow: 0 10px 22px rgba(0, 0, 0, .08);
+}
+
+/* ---------- Page container ---------- */
+.shop-container {
+  max-width: 1200px;
+  margin: 24px auto 80px;
+  padding: 0 16px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--text);
+}
+
+/* ---------- Header (banner + avatar) ---------- */
+.shop-header {
+  position: relative;
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+  border-radius: 16px;
+  padding: 18px 18px 18px 120px;
+  color: #fff;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.shop-logo-box {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, .15);
+  border: 3px solid #fff;
+  overflow: hidden;
+}
+
+.shop-logo {
+  width: 78px;
+  height: 78px;
+  object-fit: contain; /* แสดงครบไม่ตัด */
+  border-radius: 50%;
+  background: #fff;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.shop-header-info { flex: 1 1 auto; min-width: 0; }
+
+.shop-name {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.shop-slogan { margin: 0; color: #fff; opacity: .9; font-weight: 500; }
+
+.shop-header .anticon {
+  background: #ffffff22;
+  border: 1px solid #ffffff55;
+  color: #fff;
+  padding: 8px;
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
+  transition: transform .12s ease, background .15s ease;
+  cursor: pointer;
+}
+.shop-header .anticon:hover { transform: translateY(-1px); background: #ffffff33; }
+
+/* ---------- Sections ---------- */
+.card5 {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 18px;
+  margin: 18px 0 10px;
+}
+
+.shop-section {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.shop-section > h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+}
+.shop-section > p { margin: 0; color: #374151; line-height: 1.55; }
+
+/* ---------- Category Tags ---------- */
+.shop-categories { display: flex; flex-wrap: wrap; gap: 8px; }
+.shop-tag {
+  background: #fff1eb;
+  color: var(--brand);
+  border: 1px solid #ffd4c5;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------- Button ---------- */
+.btn-action { border: none; background: #fff; padding: 0; cursor: pointer; }
+.btn-action h3{
+  display:inline-block; margin:0; padding:10px 14px;
+  font-size:14px; font-weight:800; color:#fff;
+  background:linear-gradient(180deg, var(--brand-2), var(--brand));
+  border-radius:10px; box-shadow:0 8px 16px rgba(238,77,45,.25);
+  transition:transform .12s ease, filter .15s ease;
+}
+.btn-action h3:hover{ transform:translateY(-1px); filter:brightness(.97); }
+
+/* ---------- Product List ---------- */
+.product-list { margin-top: 12px; }
+
+/* layout แบบห่อแถว (flex wrap) */
+.grid-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: flex-start;
+}
+
+/* ---------- Product Card (เวอร์ชันเดียว) ---------- */
+.product-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  transition: transform .12s ease, box-shadow .15s ease;
+  position: relative;
+  box-sizing: border-box;
+  text-align: center;
+
+  /* desktop ≈ 220px ต่อใบ และยืด/หดได้ */
+  flex: 1 1 220px;
+  max-width: 220px;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0,0,0,.12);
+}
+
+.product-card .anticon {
+  color:#6b7280;
+  background:#f3f4f6;
+  border-radius:8px;
+  padding:6px;
+  transition: background .15s ease, color .15s ease, transform .12s ease;
+  cursor:pointer;
+}
+.product-card .anticon:hover { background:#e5e7eb; color:#111827; transform:translateY(-1px); }
+
+/* ---------- รูปสินค้า ---------- */
+/* รูปหลัก: ใช้กับ <img class="main-image" ...> 
+   หรือ fallback เป็นรูป <img> ตัวแรกในการ์ด */
+.product-card .main-image,
+.product-card > img:first-of-type {
+  width: 100%;
+  height: 160px;          /* พอดี ๆ */
+  object-fit: contain;    /* แสดงครบ ไม่ตัด */
+  border-radius: 10px;
+  background: #fff;
+  padding: 4px;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+/* แถบรูปย่อย (ถ้ามีหลายรูป) */
+.image-thumbnails {
+  width: 100%;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.image-thumbnails .thumb {
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.image-thumbnails .thumb img {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+.image-thumbnails .thumb.active,
+.image-thumbnails .thumb:hover { border-color: var(--brand); }
+
+/* ---------- ข้อความในการ์ด ---------- */
+.product-card h4 {
+  margin: 10px 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 36px;
+}
+.product-card p { margin: 0; }
+.product-card p:nth-of-type(1) { font-size: 12px; color: #6b7280; }
+.product-card p:nth-of-type(2) { color: var(--brand); font-weight: 800; font-size: 15px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .card5 { grid-template-columns: 1fr; }
+  .shop-header { padding-left: 110px; }
+
+  /* tablet: การ์ด 2 ใบต่อแถว */
+  .product-card {
+    flex: 1 1 calc(50% - 18px);
+    max-width: calc(50% - 18px);
+  }
+  .product-card .main-image,
+  .product-card > img:first-of-type { height: 150px; }
+  .image-thumbnails .thumb img { width: 32px; height: 32px; }
+}
+
+@media (max-width: 560px) {
+  .shop-header { padding: 14px 14px 14px 96px; border-radius: 12px; }
+  .shop-logo-box { width: 70px; height: 70px; }
+  .shop-logo { width: 62px; height: 62px; }
+
+  /* mobile: 1 ใบเต็มแถว */
+  .product-card { flex: 1 1 100%; max-width: 100%; }
+  .product-card .main-image,
+  .product-card > img:first-of-type { height: 140px; }
+  .image-thumbnails .thumb img { width: 30px; height: 30px; }
+}
+
+/* ---------- กล่องคำอธิบายร้าน & ที่อยู่ ---------- */
+.shop-description-box {
+  background: #fff8f4;
+  border-left: 5px solid var(--brand);
+  padding: 14px;
+  border-radius: 10px;
+  font-style: italic;
+  color: #4b5563;
+  margin-top: 6px;
+}
+
+.shop-address-box {
+  background: #fef3ec;
+  padding: 12px 16px;
+  border-left: 4px solid var(--brand);
+  border-radius: 10px;
+  line-height: 1.7;
+  color: #374151;
+  font-size: 14px;
+}
+.shop-address-box i { color: #9ca3af; }
+
+/* ---------- ปุ่ม edit (icon มุมขวา) ---------- */
+.icon-btn {
+  background: #ffffff22;
+  border: 1px solid #ffffff55;
+  color: #fff;
+  padding: 8px;
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
+  transition: transform .12s ease, background .15s ease;
+  cursor: pointer;
+}
+.icon-btn:hover { transform: translateY(-1px); background: #ffffff33; }
+
+/* ---------- (ตัวเลือก) แนวนอนแบบเลื่อน ---------- */
+.horizontal-scroll {
+  display: flex; flex-wrap: nowrap; overflow-x: auto;
+  padding-bottom: 10px; scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch; gap: 18px;
+}
+.horizontal-scroll::-webkit-scrollbar { display: none; }
+.horizontal-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+/* วางทับท้ายไฟล์ หรือแทนของเดิม */
+
+
+.product-edit-btn{
+  position: absolute;
+  top: 8px;
+  right: 8px;           /* ✅ ชิดขวาบน */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  color: #6b7280;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  z-index: 2;           /* ลอยเหนือรูปหลัก */
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, transform .12s ease;
+}
+.product-edit-btn:hover{
+  background:#e5e7eb; 
+  color:#111827; 
+  transform: translateY(-1px);
+}
+
+/* ถ้าเคยมีสไตล์ครอบ .product-card .anticon อยู่ ให้ลบทิ้ง/คอมเมนต์ออก
+   เพื่อไม่ให้ไปดึงไอคอนกลับไปจัดกึ่งกลาง */
