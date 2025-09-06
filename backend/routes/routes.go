@@ -51,6 +51,8 @@ func SetupRouter() *gin.Engine {
 		api.PUT("/shopcategories/:id", controller.UpdateShopCategory)
 		api.DELETE("/shopcategories/:id", controller.DeleteShopCategory)
 		api.DELETE("/DeletePost/:id", mw.Authz(), controller.SoftDeletePostWithProductAndImages)
+
+		// ----------------- ส่วนของ DiscountCode -----------------
 		api.GET("/discountcodes", controller.ListDiscountCodes)
 		api.POST("/discountcodes", controller.CreateDiscountCode)
 		api.PUT("/discountcodes/:id", controller.UpdateDiscountCode)

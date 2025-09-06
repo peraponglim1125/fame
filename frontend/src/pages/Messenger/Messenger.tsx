@@ -26,7 +26,23 @@ type DMPost = {
 };
 
 /* ---------- Config ---------- */
-const API = "http://localhost:8080/api";
+const API = "http://localhost:8080/api";      // REST base
+const API_HOST = API.replace(/\/api\/?$/, ""); // => http://localhost:8080
+
+// ทำ URL ให้ชัวร์: แก้ \ เป็น /, เติม / นำหน้า, ต่อ host ถ้ายังไม่ใช่ http(s)
+const makeUrl = (u?: string) => {
+  let s = (u || "").trim().replace(/\\/g, "/");
+  if (!s) return "";
+  if (!/^https?:\/\//i.test(s)) {
+    if (!s.startsWith("/")) s = "/" + s;
+    s = `${API_HOST}${s}`;
+  }
+  return s;
+};
+
+// รองรับทั้ง username และ UserName จาก backend
+const nameOf = (m?: Member | null) => (m?.username ?? m?.UserName ?? "").toString();
+
 const ORANGE = {
   50: "#FFF7ED",
   100: "#FFEDD5",
@@ -44,12 +60,8 @@ const bubbleStyle = {
   other: { background: "#fff", color: "#111", border: `1px solid ${ORANGE[100]}` },
 };
 
-// รองรับทั้ง username และ UserName จาก backend
-const nameOf = (m?: Member | null) => (m?.username ?? m?.UserName ?? "").toString();
-
 /* ---------- Component ---------- */
 const Messenger: React.FC = () => {
-  // ตั้งค่าตาม user จริงในระบบของคุณ
   const currentUser: Member = { ID: 1, username: "Me" };
 
   const [threads, setThreads] = useState<DMThread[]>([]);
@@ -64,15 +76,27 @@ const Messenger: React.FC = () => {
   const [editText, setEditText] = useState("");
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const headers = { "Content-Type": "application/json" };
 
   const partner = useMemo(() => {
     if (!selected) return null;
     return selected.user1Id === currentUser.ID ? selected.user2 : selected.user1;
   }, [selected, currentUser.ID]);
 
-  const headers = { "Content-Type": "application/json" };
+  /* ---------- Normalizers (สำคัญ) ---------- */
+  const normalizeFile = (f: any): DMFile => ({
+    ID: f.ID ?? f.id,
+    postId: f.postId ?? f.post_id ?? f.messageId ?? f.message_id,
+    fileUrl: makeUrl(f.fileUrl ?? f.file_url ?? f.url),
+    fileType: (f.fileType ?? f.file_type ?? f.type ?? "file").toLowerCase(),
+  });
 
-  /* ---------- Fetch Threads ---------- */
+  const normalizePost = (p: any): DMPost => ({
+    ...p,
+    Files: (p.Files ?? p.files ?? p.Attachments ?? p.attachments ?? []).map(normalizeFile),
+  });
+
+  /* ---------- Fetch Threads / Posts ---------- */
   const loadThreads = async () => {
     const res = await fetch(`${API}/dm/threads?memberId=${currentUser.ID}`);
     const js = await res.json();
@@ -82,7 +106,8 @@ const Messenger: React.FC = () => {
   const loadPosts = async (threadId: number) => {
     const res = await fetch(`${API}/dm/threads/${threadId}/posts?offset=0&limit=100`);
     const js = await res.json();
-    setPosts(js.data || []);
+    const list: DMPost[] = (js.data || []).map(normalizePost);
+    setPosts(list);
     // mark read
     await fetch(`${API}/dm/threads/${threadId}/read`, {
       method: "PATCH",
@@ -91,26 +116,14 @@ const Messenger: React.FC = () => {
     });
   };
 
-  useEffect(() => {
-    loadThreads();
-  }, []);
-
-  useEffect(() => {
-    if (!selected) return;
-    loadPosts(selected.ID);
-  }, [selected?.ID]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [posts.length]);
+  useEffect(() => { loadThreads(); }, []);
+  useEffect(() => { if (selected) loadPosts(selected.ID); }, [selected?.ID]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [posts.length]);
 
   /* ---------- Open/Create Thread ---------- */
   const openThreadByUsername = async () => {
     if (!friendUsername.trim()) return;
-
-    // ตัด whitespace และ quote ออกจากค่าพิมพ์
     const friend = friendUsername.trim().replace(/^["']|["']$/g, "");
-
     const res = await fetch(`${API}/dm/threads/open`, {
       method: "POST",
       headers,
@@ -132,10 +145,9 @@ const Messenger: React.FC = () => {
     fd.append("file", file);
     const res = await fetch(`${API}/dm/upload`, { method: "POST", body: fd });
     const js = await res.json();
-    let type: string = "file";
-    if (file.type.startsWith("image/")) type = "image";
-    else if (file.type.startsWith("video/")) type = "video";
-    return { url: js.url, type };
+    const type = file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "video" : "file";
+    // backend อาจคืน "url" เป็น "uploads/..." หรือ "/uploads/..." → ปรับเป็น URL เต็มไว้ตั้งแต่ตอนนี้
+    return { url: makeUrl(js.url), type };
   };
 
   /* ---------- Send Message ---------- */
@@ -160,7 +172,7 @@ const Messenger: React.FC = () => {
     });
     const js = await res.json();
     if (js.data) {
-      setPosts((p) => [...p, js.data]);
+      setPosts((p) => [...p, normalizePost(js.data)]);
       setMsg("");
       setFileList([]);
       await loadThreads();
@@ -183,7 +195,8 @@ const Messenger: React.FC = () => {
     });
     const js = await res.json();
     if (js.data) {
-      setPosts((arr) => arr.map((x) => (x.ID === editingId ? js.data : x)));
+      const upd = normalizePost(js.data);
+      setPosts((arr) => arr.map((x) => (x.ID === editingId ? upd : x)));
       setEditingId(null);
       setEditText("");
     } else {
@@ -238,9 +251,7 @@ const Messenger: React.FC = () => {
               value={friendUsername}
               onChange={(e) => setFriendUsername(e.target.value)}
               placeholder='พิมพ์ username หรือ id เช่น 5'
-              style={{
-                flex: 1, padding: 10, borderRadius: 10, border: `1px solid ${ORANGE[200]}`
-              }}
+              style={{ flex: 1, padding: 10, borderRadius: 10, border: `1px solid ${ORANGE[200]}` }}
               onKeyDown={(e) => { if (e.key === "Enter") openThreadByUsername(); }}
             />
             <button
@@ -358,13 +369,13 @@ const Messenger: React.FC = () => {
                   {/* Files */}
                   {p.Files && p.Files.length > 0 && (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 8, marginTop: 8 }}>
-                      {p.Files.map(f => (
+                      {p.Files.map((f) => (
                         <div key={f.ID} style={{ borderRadius: 10, overflow: "hidden", border: `1px solid ${ORANGE[100]}`, background: "white" }}>
                           {f.fileType === "image" ? (
-                            <img src={f.fileUrl} style={{ width: "100%", display: "block" }} />
+                            <img src={f.fileUrl} alt="attachment" loading="lazy" style={{ width: "100%", display: "block" }} />
                           ) : (
                             <a href={f.fileUrl} target="_blank" rel="noreferrer" style={{ display: "block", padding: 10, textDecoration: "none", color: ORANGE[700] }}>
-                              เปิดไฟล์: {f.fileUrl.split("/").pop()}
+                              เปิดไฟล์: {decodeURIComponent(f.fileUrl.split("/").pop() || "")}
                             </a>
                           )}
                         </div>
