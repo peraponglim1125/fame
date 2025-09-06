@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"encoding/base64"
+    "encoding/json"
 
 	"example.com/GROUB/config"
 	"example.com/GROUB/entity"
@@ -32,6 +34,91 @@ func parseUintQuery(c *gin.Context, name string) (uint, error) {
 	return uint(id64), err
 }
 
+// ดึง userID จาก middleware (c.Set("userID", ...)) หรือโหมด dev ผ่าน Authorization: Bearer uid:<id>
+// เพิ่ม import:
+// "encoding/base64"
+// "encoding/json"
+
+func authedUserID(c *gin.Context) (uint, bool) {
+	// 1) middleware ตั้งไว้
+	if v, ok := c.Get("userID"); ok {
+		switch t := v.(type) {
+		case uint:
+			if t > 0 { return t, true }
+		case int64:
+			if t > 0 { return uint(t), true }
+		case float64:
+			if t > 0 { return uint(t), true }
+		}
+	}
+
+	// 2) dev header ตรง ๆ
+	if x := strings.TrimSpace(c.GetHeader("X-User-Id")); x != "" {
+		if n, err := strconv.ParseUint(x, 10, 64); err == nil && n > 0 {
+			return uint(n), true
+		}
+	}
+
+	// 3) Authorization
+	auth := strings.TrimSpace(c.GetHeader("Authorization"))
+	if strings.HasPrefix(strings.ToLower(auth), "bearer ") {
+		token := strings.TrimSpace(auth[7:])
+
+		// 3.1) รูปแบบ dev: Bearer uid:<id>
+		if strings.HasPrefix(token, "uid:") {
+			if n, err := strconv.ParseUint(strings.TrimPrefix(token, "uid:"), 10, 64); err == nil && n > 0 {
+				return uint(n), true
+			}
+		}
+
+		// 3.2) (ออปชัน) ถ้าเป็น JWT ลองอ่าน payload (dev only, no verify)
+		if strings.Count(token, ".") == 2 {
+			parts := strings.Split(token, ".") // header.payload.signature
+			if len(parts) == 3 {
+				// base64url decode
+				payload := parts[1]
+				if pad := len(payload) % 4; pad != 0 {
+					payload += strings.Repeat("=", 4-pad)
+				}
+				if b, err := base64.URLEncoding.DecodeString(payload); err == nil {
+					var claims map[string]any
+					if err := json.Unmarshal(b, &claims); err == nil {
+						// รองรับหลายคีย์: sub / id / user_id
+						if v, ok := claims["sub"]; ok {
+							if s := fmt.Sprint(v); s != "" {
+								if n, err := strconv.ParseUint(s, 10, 64); err == nil && n > 0 {
+									return uint(n), true
+								}
+							}
+						}
+						for _, k := range []string{"id", "user_id", "uid"} {
+							if v, ok := claims[k]; ok {
+								if s := fmt.Sprint(v); s != "" {
+									if n, err := strconv.ParseUint(s, 10, 64); err == nil && n > 0 {
+										return uint(n), true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return 0, false
+}
+
+
+// ช่วยเช็กว่า user เป็นสมาชิกของห้องไหม
+func isThreadMember(db *gorm.DB, threadID, userID uint) (bool, *entity.DMThread) {
+	var th entity.DMThread
+	if err := db.First(&th, threadID).Error; err != nil {
+		return false, nil
+	}
+	return (th.User1ID == userID || th.User2ID == userID), &th
+}
+
 /* ===================== Open Thread / Add Friend ===================== */
 
 type OpenThreadReq struct {
@@ -43,8 +130,21 @@ type OpenThreadReq struct {
 // หา/สร้างห้อง DM โดยใช้ username หรือ id ของเพื่อน (กันซ้ำห้องด้วย canonical order)
 func OpenThread(c *gin.Context) {
 	var req OpenThreadReq
-	if err := c.ShouldBindJSON(&req); err != nil || req.CurrentUserID == 0 || strings.TrimSpace(req.FriendUsername) == "" {
+	if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.FriendUsername) == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	// ใช้ user จาก auth เป็นหลัก (ถ้ามี), ถ้าไม่มีค่อย fallback ไป req.CurrentUserID
+	if uid, ok := authedUserID(c); ok {
+		if req.CurrentUserID != 0 && req.CurrentUserID != uid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "actor mismatch"})
+			return
+		}
+		req.CurrentUserID = uid
+	}
+	if req.CurrentUserID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing current user"})
 		return
 	}
 
@@ -57,23 +157,20 @@ func OpenThread(c *gin.Context) {
 		return
 	}
 
-	// sanitize ค่าที่พิมพ์มา: ตัดช่องว่าง + quote
+	// sanitize
 	raw := strings.TrimSpace(req.FriendUsername)
 	raw = strings.Trim(raw, `"'`)
 
-	// หาเพื่อน: ถ้าเป็นตัวเลขล้วน -> หาโดย ID ก่อน, ไม่งั้นหาโดย user_name
+	// หาเพื่อน: เลข = หา id ก่อน ไม่งั้นหา user_name
 	var friend entity.Member
 	if _, err := strconv.Atoi(raw); err == nil {
-		// เป็นเลข → หา id ก่อน
 		if e := db.First(&friend, raw).Error; e != nil {
-			// เผื่อไม่เจอด้วย id ลอง user_name เท่ากัน
 			if e2 := db.Where("user_name = ?", raw).First(&friend).Error; e2 != nil {
 				c.JSON(http.StatusNotFound, gin.H{"error": "friend username not found"})
 				return
 			}
 		}
 	} else {
-		// ไม่ใช่เลข → หาโดย user_name
 		if err := db.Where("user_name = ?", raw).First(&friend).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "friend username not found"})
 			return
@@ -119,33 +216,39 @@ func OpenThread(c *gin.Context) {
 
 // GET /api/dm/threads?memberId=1
 func ListThreads(c *gin.Context) {
+	// ถ้ามี user จาก auth ให้ใช้ค่านั้นเป็นหลัก (จะไม่ให้ดึงห้องของคนอื่น)
+	if uid, ok := authedUserID(c); ok && uid > 0 {
+		// memberID จาก query (ถ้าส่งมา) ต้องตรงกับ uid
+		if qidStr := c.Query("memberId"); qidStr != "" {
+			if qid, err := strconv.ParseUint(qidStr, 10, 64); err == nil && uint(qid) != uid {
+				c.JSON(http.StatusForbidden, gin.H{"error": "memberId mismatch"})
+				return
+			}
+		}
+		c.Request.URL.Query().Set("memberId", strconv.FormatUint(uint64(uid), 10))
+	}
+
 	memberID, err := parseUintQuery(c, "memberId")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err != nil || memberID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "memberId required"})
 		return
 	}
 
 	db := config.DB()
 	var threads []entity.DMThread
 
-	// fallback กันคอลัมน์ยังไม่ถูก migrate
 	order := "updated_at DESC"
 	if db.Migrator().HasColumn(&entity.DMThread{}, "last_message_at") ||
 		db.Migrator().HasColumn(&entity.DMThread{}, "LastMessageAt") {
 		order = "COALESCE(last_message_at, updated_at) DESC"
 	}
 
-	if err := db.
-		Preload("User1").
+	if err := db.Preload("User1").
 		Preload("User2").
 		Where("user1_id = ? OR user2_id = ?", memberID, memberID).
 		Order(order).
 		Find(&threads).Error; err != nil {
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":  "query threads failed",
-			"detail": err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "query threads failed", "detail": err.Error()})
 		return
 	}
 
@@ -159,7 +262,21 @@ func DeleteThread(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	if err := config.DB().Delete(&entity.DMThread{}, id).Error; err != nil {
+
+	uid, ok := authedUserID(c)
+	if !ok || uid == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	db := config.DB()
+	okMember, _ := isThreadMember(db, id, uid)
+	if !okMember {
+		c.JSON(http.StatusForbidden, gin.H{"error": "not a member of this thread"})
+		return
+	}
+
+	if err := db.Delete(&entity.DMThread{}, id).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "delete failed"})
 		return
 	}
@@ -175,6 +292,16 @@ func ListPosts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid thread id"})
 		return
 	}
+	uid, ok := authedUserID(c)
+	if ok {
+		// ถ้ามี auth ต้องเป็นสมาชิกห้องเท่านั้น
+		db := config.DB()
+		if isMem, _ := isThreadMember(db, threadID, uid); !isMem {
+			c.JSON(http.StatusForbidden, gin.H{"error": "not a member of this thread"})
+			return
+		}
+	}
+
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
 	if limit <= 0 || limit > 200 {
@@ -213,8 +340,21 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 	var req CreatePostReq
-	if err := c.ShouldBindJSON(&req); err != nil || req.SenderID == 0 {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	// บังคับ sender ให้ตรงกับ auth ถ้ามี
+	if uid, ok := authedUserID(c); ok {
+		if req.SenderID != 0 && req.SenderID != uid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "sender mismatch"})
+			return
+		}
+		req.SenderID = uid
+	}
+	if req.SenderID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing sender"})
 		return
 	}
 
@@ -274,18 +414,35 @@ func EditPost(c *gin.Context) {
 		return
 	}
 	var req EditPostReq
-	if err := c.ShouldBindJSON(&req); err != nil || req.Content == "" {
+	if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.Content) == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
+
+	uid, ok := authedUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	db := config.DB()
+	var post entity.DMPost
+	if err := db.First(&post, postID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "post not found"})
+		return
+	}
+	if post.SenderID != uid {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only sender can edit"})
+		return
+	}
+
 	now := time.Now()
-	if err := config.DB().Model(&entity.DMPost{}).Where("id = ?", postID).
+	if err := db.Model(&entity.DMPost{}).Where("id = ?", postID).
 		Updates(map[string]any{"content": req.Content, "edited_at": &now}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "edit failed"})
 		return
 	}
-	var post entity.DMPost
-	_ = config.DB().Preload("Sender").Preload("Files").First(&post, postID).Error
+	_ = db.Preload("Sender").Preload("Files").First(&post, postID).Error
 	c.JSON(http.StatusOK, gin.H{"data": post})
 }
 
@@ -296,7 +453,25 @@ func DeletePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
 		return
 	}
-	if err := config.DB().Delete(&entity.DMPost{}, postID).Error; err != nil {
+
+	uid, ok := authedUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	db := config.DB()
+	var post entity.DMPost
+	if err := db.First(&post, postID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "post not found"})
+		return
+	}
+	if post.SenderID != uid {
+		c.JSON(http.StatusForbidden, gin.H{"error": "only sender can delete"})
+		return
+	}
+
+	if err := db.Delete(&entity.DMPost{}, postID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "delete failed"})
 		return
 	}
@@ -318,13 +493,30 @@ func MarkRead(c *gin.Context) {
 		return
 	}
 	var req MarkReadReq
-	if err := c.ShouldBindJSON(&req); err != nil || req.MemberID == 0 {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
+	// ยึด auth เป็นหลัก
+	if uid, ok := authedUserID(c); ok {
+		if req.MemberID != 0 && req.MemberID != uid {
+			c.JSON(http.StatusForbidden, gin.H{"error": "member mismatch"})
+			return
+		}
+		req.MemberID = uid
+	}
+	if req.MemberID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing memberId"})
+		return
+	}
+
 	db := config.DB()
-	// ทำให้ข้อความทั้งหมดที่ "ไม่ใช่ของเรา" กลายเป็นอ่านแล้ว
+	if isMem, _ := isThreadMember(db, threadID, req.MemberID); !isMem {
+		c.JSON(http.StatusForbidden, gin.H{"error": "not a member of this thread"})
+		return
+	}
+
 	if err := db.Model(&entity.DMPost{}).
 		Where("thread_id = ? AND sender_id <> ? AND is_read = ?", threadID, req.MemberID, false).
 		Update("is_read", true).Error; err != nil {

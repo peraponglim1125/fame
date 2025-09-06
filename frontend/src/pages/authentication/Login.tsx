@@ -4,34 +4,42 @@ import type { LoginRequest } from "../../../interfaces/Login";
 import { useNavigate } from "react-router-dom";
 import useEcomStore from "../../store/ecom-store";
 
-const { Title, Text } = Typography; // ย้ายออกมานอก component ก็ได้
+const { Title, Text } = Typography;
 
 export default function LoginForm() {
-  
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
 
   const actionLogin = useEcomStore((state: any) => state.actionLogin);
-  const token = useEcomStore((state: any) => state.token);   // ✅ ตั้งชื่อให้ตรงความจริง
-  console.log("token from zustand:", token);
+  const tokenInStore = useEcomStore((state: any) => state.token);
+  console.log("token from zustand:", tokenInStore);
+
+  const persistAuth = (user: any, token?: string) => {
+    const ID = Number(user?.ID ?? user?.id);
+    const username = user?.UserName ?? user?.username ?? user?.userName ?? "Me";
+    if (!ID || Number.isNaN(ID)) throw new Error("Invalid user ID from login response");
+
+    localStorage.setItem("auth:user", JSON.stringify({ ID, username }));
+    localStorage.setItem("uid", String(ID));          // dev mode header: Bearer uid:<ID>
+    if (token) localStorage.setItem("token", token);  // JWT (ถ้ามี)
+
+    window.dispatchEvent(new Event("auth-changed"));  // แจ้งให้ Messenger/หน้าอื่นรีโหลดผู้ใช้
+  };
 
   const onFinish = async (values: LoginRequest) => {
     setLoading(true);
     try {
-      // ✅ ใช้ค่าที่ actionLogin คืนมาให้ถูก
-      const { user, token, hasShop } = await actionLogin(values);
-      console.log("user:", user);
-      console.log("hasShop:", hasShop);
-      console.log("token:", token);
+      const { user, token } = await actionLogin(values);
+      persistAuth(user, token);
 
       messageApi.success({
         content: "Welcome back",
-        duration: 1.0,
+        duration: 0.8,
         onClose: () => {
-          // จะเลือกเส้นทางตาม hasShop ก็ได้
-          navigate("/");
-          // หรือ: navigate(hasShop ? "/shop" : "/create-shop");
+          // ✅ เปลี่ยนเป็นไปหน้า Home (หรือจะไม่ navigate เลยก็ได้)
+          navigate("/"); 
+          // ถ้าไม่อยากเปลี่ยนหน้าเลย: ลบบรรทัด navigate("/") ออก
         },
       });
     } catch (err: any) {
@@ -68,9 +76,7 @@ export default function LoginForm() {
           >
             <Row align="middle" justify="center" style={{ padding: "20px 0" }}>
               <Col span={24} style={{ textAlign: "center", marginBottom: 20 }}>
-                <Title level={2} style={{ margin: 0, color: "#1890ff" }}>
-                  Sign In
-                </Title>
+                <Title level={2} style={{ margin: 0, color: "#1890ff" }}>Sign In</Title>
                 <Text type="secondary">Access your account</Text>
               </Col>
 
@@ -120,13 +126,7 @@ export default function LoginForm() {
                       type="default"
                       block
                       disabled={loading}
-                      style={{
-                        marginTop: 12,
-                        width: "100%",
-                        height: 48,
-                        fontSize: 16,
-                        borderRadius: 8,
-                      }}
+                      style={{ marginTop: 12, width: "100%", height: 48, fontSize: 16, borderRadius: 8 }}
                       onClick={() => navigate("/register")}
                     >
                       Register
